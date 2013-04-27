@@ -34,7 +34,7 @@
 (defun hexstream-html-doc-suitable-region ()
   (if (use-region-p)
       (list (region-beginning) (region-end))
-    (if (char-equal (char-syntax (char-after)) ?\s)
+    (if (not (find (char-syntax (char-after)) "w_"))
         (list nil nil)
       (list (save-excursion
               (skip-syntax-backward "w_")
