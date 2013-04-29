@@ -28,6 +28,7 @@
 
 (defun hexstream-html-doc-variable (region-min region-max)
   (interactive (hexstream-html-doc-suitable-region))
+  (downcase-region region-min region-max)
   (hexstream-html-doc-tag "var"))
 
 
