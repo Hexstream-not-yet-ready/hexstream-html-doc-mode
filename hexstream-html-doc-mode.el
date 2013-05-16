@@ -1,3 +1,5 @@
+(require 'cl)
+
 (define-derived-mode hexstream-html-doc-mode html-mode "Hexstream HTML Documentation"
   (let ((map hexstream-html-doc-mode-map))
     (define-key map (kbd "C-c t") 'hexstream-html-doc-tag)
@@ -16,15 +18,26 @@
            (goto-char (+ (point) (length insert-before))))))
 
 
-(defun hexstream-html-doc-tag (name)
+(defun* hexstream-html-doc-tag (name &key attributes)
   (interactive "*@sInsert tag: ")
   (let (region-min region-max)
     ;; I don't know if it's possible to mix an interactive string spec and code...
     (let ((region (hexstream-html-doc-suitable-region)))
-      (setq region-min (first region)
+      (setf region-min (first region)
             region-max (second region)))
-    (hexstream-html-doc-wrap region-min region-max
-                             (concat  "<" name ">") (concat  "</" name ">"))))
+    (hexstream-html-doc-wrap
+     region-min region-max
+     (with-output-to-string
+       (princ "<")
+       (princ name)
+       (when attributes
+         (dolist (attribute attributes)
+           (princ " ")
+           (princ (car attribute))
+           (princ "=")
+           (prin1 (cdr attribute))))
+       (princ ">"))
+     (concat  "</" name ">"))))
 
 (defun hexstream-html-doc-variable (region-min region-max)
   (interactive (hexstream-html-doc-suitable-region))
