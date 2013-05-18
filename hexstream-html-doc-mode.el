@@ -2,8 +2,11 @@
 
 (define-derived-mode hexstream-html-doc-mode html-mode "Hexstream HTML Documentation"
   (let ((map hexstream-html-doc-mode-map))
+    (define-key map (kbd "C-c m") (hexstream-html-doc-make-repeat-like
+                                   'hexstream-html-doc-cycle-marker))
     (define-key map (kbd "C-c t") 'hexstream-html-doc-tag)
     (define-key map (kbd "C-c v") 'hexstream-html-doc-variable)
+    (define-key map (kbd "C-c i t") 'hexstream-html-doc-insert-table)
     (define-key map (kbd "C-c e")
       (lambda (region-min region-max)
         (interactive (hexstream-html-doc-suitable-region))
@@ -44,28 +47,80 @@
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "library" "glossary")))))
 
-(defvar hexstream-html-doc-start-marker (make-marker))
-(defvar hexstream-html-doc-end-marker (make-marker))
+(defvar hexstream-html-doc-outer-start-marker (let ((m (make-marker)))
+                                                (prog1 m
+                                                  (set-marker-insertion-type m t))))
+(defvar hexstream-html-doc-inner-start-marker (make-marker))
+(defvar hexstream-html-doc-inner-end-marker (let ((m (make-marker)))
+                                              (prog1 m
+                                                (set-marker-insertion-type m t))))
+(defvar hexstream-html-doc-outer-end-marker (make-marker))
 
-(defun hexstream-html-doc-wrap (region-min region-max insert-before insert-after)
+;; Currently won't cycle correctly if the next marker is "on top of" the one we're at.
+(defun hexstream-html-doc-cycle-marker ()
+  (interactive)
+  (let ((p (point)))
+    ;; Implementation could be more clever...
+    (setf (point)
+          (cond ((= p hexstream-html-doc-outer-start-marker)
+                 (message "<tag>|content</tag>")
+                 hexstream-html-doc-inner-start-marker)
+                ((= p hexstream-html-doc-inner-start-marker)
+                 (message "<tag>content|</tag>")
+                 hexstream-html-doc-inner-end-marker)
+                ((= p hexstream-html-doc-inner-end-marker)
+                 (message "<tag>content</tag>|")
+                 hexstream-html-doc-outer-end-marker)
+                (t (message "|<tag>content</tag>")
+                   hexstream-html-doc-outer-start-marker)))))
+
+;; C-x z (repeat)-like trick from:
+;; http://lists.gnu.org/archive/html/help-gnu-emacs/2006-04/msg00508.html
+(defun hexstream-html-doc-make-repeat-like (inner-function)
+  (lexical-let ((inner-function inner-function))
+    (lambda ()
+      (interactive)
+      (let ((dont-stop t))
+        (funcall inner-function)
+        (while dont-stop
+          (let ((last last-input-event)
+                (event (read-event)))
+            (if (eq event last)
+                (funcall inner-function)
+              (push event unread-command-events)
+              (setq dont-stop nil))))))))
+
+(defvar hexstream-html-doc-tag-style :inline)
+(defvar hexstream-html-doc-leave-point-at :inner-start)
+
+(defun* hexstream-html-doc-wrap (region-min region-max insert-before insert-after
+                                            &key (leave-point-at hexstream-html-doc-leave-point-at))
   (cond (region-min
          (when (eq region-min t)
-           (setf region-min (marker-position hexstream-html-doc-start-marker)))
+           (setf region-min (marker-position hexstream-html-doc-outer-start-marker)))
          (when (eq region-max t)
-           (setf region-max (marker-position hexstream-html-doc-end-marker)))
-         (move-marker hexstream-html-doc-start-marker region-min)
-         (move-marker hexstream-html-doc-end-marker region-max)
-         (save-excursion
-           (goto-char region-max)
-           (insert insert-after)
-           (goto-char region-min)
-           (insert insert-before)))
+           (setf region-max (marker-position hexstream-html-doc-outer-end-marker)))
+         (goto-char region-min)
+         (insert insert-before)
+         (setf (marker-position hexstream-html-doc-outer-start-marker) region-min
+               (marker-position hexstream-html-doc-inner-start-marker) (point))
+         (insert insert-after)
+         (setf (marker-position hexstream-html-doc-inner-end-marker) (- (point) (length insert-after))
+               (marker-position hexstream-html-doc-outer-end-marker) (point)))
         ;; Todo: smarter handling
-        (t (hexstream-html-doc-wrap (point) (point) insert-before insert-after)
-           (goto-char (+ (point) (length insert-before))))))
+        (t (hexstream-html-doc-wrap (point) (point) insert-before insert-after)))
+  (setf (point) (ecase leave-point-at
+                  (:outer-start hexstream-html-doc-outer-start-marker)
+                  (:inner-start hexstream-html-doc-inner-start-marker)
+                  (:inner-end hexstream-html-doc-inner-end-marker)
+                  (:outer-end hexstream-html-doc-outer-end-marker)))
+  nil)
 
 
-(defun* hexstream-html-doc-tag (region-min region-max name &key attributes)
+(defun* hexstream-html-doc-tag (region-min region-max name
+                                           &key attributes
+                                           (style hexstream-html-doc-tag-style)
+                                           (leave-point-at hexstream-html-doc-leave-point-at))
   (interactive (let ((region (hexstream-html-doc-suitable-region)))
                  (list (first region) (second region)
                        (call-interactively (lambda (name)
@@ -83,12 +138,27 @@
          (princ "=")
          (prin1 (cdr attribute))))
      (princ ">"))
-   (concat  "</" name ">")))
+   (concat  "</" name ">")
+   :leave-point-at leave-point-at)
+  (when (eq style :block)
+    (newline 2)
+    (previous-line)
+    (indent-for-tab-command)))
 
 (defun hexstream-html-doc-variable (region-min region-max)
   (interactive (hexstream-html-doc-suitable-region))
   (downcase-region region-min region-max)
   (hexstream-html-doc-tag region-min region-max "var"))
+
+(defun hexstream-html-doc-insert-table ()
+  (interactive)
+  (let ((hexstream-html-doc-tag-style :block)
+        (start (point))
+        (end (copy-marker (point) t)))
+    (hexstream-html-doc-tag nil nil "table")
+    (hexstream-html-doc-tag nil nil "thead" :leave-point-at :outer-end)
+    (hexstream-html-doc-tag nil nil "tbody")
+    (indent-region start end)))
 
 (defun* hexstream-html-doc-make-code-wrapper (css-class-list &key (downcasep t))
   (lexical-let ((class-attribute (with-output-to-string
