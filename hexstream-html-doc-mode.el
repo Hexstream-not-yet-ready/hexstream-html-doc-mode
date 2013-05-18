@@ -101,9 +101,12 @@
          (when (eq region-max t)
            (setf region-max (marker-position hexstream-html-doc-outer-end-marker)))
          (goto-char region-min)
+         (setf (marker-position hexstream-html-doc-inner-end-marker)
+               region-max)
          (insert insert-before)
          (setf (marker-position hexstream-html-doc-outer-start-marker) region-min
                (marker-position hexstream-html-doc-inner-start-marker) (point))
+         (goto-char hexstream-html-doc-inner-end-marker)
          (insert insert-after)
          (setf (marker-position hexstream-html-doc-inner-end-marker) (- (point) (length insert-after))
                (marker-position hexstream-html-doc-outer-end-marker) (point)))
