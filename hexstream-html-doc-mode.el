@@ -4,6 +4,7 @@
   (let ((map hexstream-html-doc-mode-map))
     (define-key map (kbd "C-c m") (hexstream-html-doc-make-repeat-like
                                    'hexstream-html-doc-cycle-marker))
+    (define-key map (kbd "C-c u") 'hexstream-html-doc-unfill)
     (define-key map (kbd "C-c t") 'hexstream-html-doc-tag)
     (define-key map (kbd "C-c v") 'hexstream-html-doc-variable)
     (define-key map (kbd "C-c i t") 'hexstream-html-doc-insert-table)
@@ -89,6 +90,11 @@
                 (funcall inner-function)
               (push event unread-command-events)
               (setq dont-stop nil))))))))
+
+(defun hexstream-html-doc-unfill ()
+  (interactive)
+  (let ((fill-column 65535))
+    (fill-paragraph)))
 
 (defvar hexstream-html-doc-tag-style :inline)
 (defvar hexstream-html-doc-leave-point-at :inner-start)
