@@ -244,4 +244,5 @@
               (point))
             (save-excursion
               (skip-syntax-forward "w_")
+              (skip-chars-backward ".")
               (point))))))
