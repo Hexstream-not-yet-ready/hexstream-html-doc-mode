@@ -24,6 +24,7 @@
         (interactive (hexstream-html-doc-suitable-region))
         (hexstream-html-doc-tag region-min region-max "cite"
                                 :attributes '(("class" . "common-lisp library")))))
+
     (define-key map (kbd "C-c c l p")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "library" "package")))
@@ -50,7 +51,40 @@
        '("common-lisp" "library" "constant")))
     (define-key map (kbd "C-c c l g")
       (hexstream-html-doc-make-code-wrapper
-       '("common-lisp" "library" "glossary")))))
+       '("common-lisp" "library" "glossary")))
+
+    ;; Stupid copy-paste of above. Refactor later.
+    ;; A better thing would be one command that looks up the kind from a database,
+    ;; and queries the user if there are multiple kinds for that name.
+    ;; Even better would be Slime integration,
+    ;; for automatically marking up an entire expression.
+    (define-key map (kbd "C-c c s p")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "package")))
+    (define-key map (kbd "C-c c s f")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "function" "operator")))
+    (define-key map (kbd "C-c c s m")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "macro" "operator")))
+    (define-key map (kbd "C-c c s s")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "special-operator" "operator")))
+    (define-key map (kbd "C-c c s C")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "class")))
+    (define-key map (kbd "C-c c s t")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "type-specifier")))
+    (define-key map (kbd "C-c c s r")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "marker")))
+    (define-key map (kbd "C-c c s k")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "constant")))
+    (define-key map (kbd "C-c c s g")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "glossary")))))
 
 (defvar hexstream-html-doc-outer-start-marker (let ((m (make-marker)))
                                                 (prog1 m
