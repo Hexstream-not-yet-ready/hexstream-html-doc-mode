@@ -5,6 +5,7 @@
     (define-key map (kbd "C-c m") (hexstream-html-doc-make-repeat-like
                                    'hexstream-html-doc-cycle-marker))
     (define-key map (kbd "C-c u") 'hexstream-html-doc-unfill)
+    (define-key map (kbd "C-c s") 'hexstream-html-doc-strip)
     (define-key map (kbd "C-c t") 'hexstream-html-doc-tag)
     (define-key map (kbd "C-c v") 'hexstream-html-doc-variable)
     (define-key map (kbd "C-c i t") 'hexstream-html-doc-insert-table)
@@ -35,6 +36,9 @@
     (define-key map (kbd "C-c c l s")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "library" "special-operator" "operator")))
+    (define-key map (kbd "C-c c l C")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "library" "class")))
     (define-key map (kbd "C-c c l t")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "library" "type-specifier")))
@@ -95,6 +99,19 @@
   (interactive)
   (let ((fill-column 65535))
     (fill-paragraph)))
+
+(defun hexstream-html-doc-strip ()
+  (interactive)
+  (save-excursion
+    (skip-syntax-backward "^)")
+    (let ((end (point)))
+      (skip-syntax-backward "^(")
+      (delete-region (1- (point)) end))
+    (skip-syntax-forward "^(")
+    (let ((start (point)))
+      (skip-syntax-forward "^)")
+      (delete-region start (1+ (point)))))
+  nil)
 
 (defvar hexstream-html-doc-tag-style :inline)
 (defvar hexstream-html-doc-leave-point-at :inner-start)
