@@ -7,7 +7,8 @@
     (define-key map (kbd "C-c u") 'hexstream-html-doc-unfill)
     (define-key map (kbd "C-c s") 'hexstream-html-doc-strip)
     (define-key map (kbd "C-c t") 'hexstream-html-doc-tag)
-    (define-key map (kbd "C-c v") 'hexstream-html-doc-variable)
+    (define-key map (kbd "C-c v") (hexstream-html-doc-make-repeat-like
+                                   'hexstream-html-doc-variable))
     (define-key map (kbd "C-c i t") 'hexstream-html-doc-insert-table)
     (define-key map (kbd "C-c e")
       (lambda (region-min region-max)
@@ -120,12 +121,12 @@
     (lambda ()
       (interactive)
       (let ((dont-stop t))
-        (funcall inner-function)
+        (call-interactively inner-function)
         (while dont-stop
           (let ((last last-input-event)
                 (event (read-event)))
             (if (eq event last)
-                (funcall inner-function)
+                (call-interactively inner-function)
               (push event unread-command-events)
               (setq dont-stop nil))))))))
 
