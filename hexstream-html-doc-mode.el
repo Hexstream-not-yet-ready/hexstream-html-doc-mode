@@ -12,10 +12,10 @@
     (define-key map (kbd "C-c e")
       (lambda (region-min region-max)
         (interactive (hexstream-html-doc-suitable-region))
-        (hexstream-html-doc-tag region-min region-max "code"
-                                :attributes '(("class" . "common-lisp")))
-        (hexstream-html-doc-tag t t "pre"
-                                :attributes '(("class" . "example")))))
+        (hexstream-html-doc-tag region-min region-max "pre"
+                                :attributes '(("class" . "example")))
+        (hexstream-html-doc-tag nil nil "code"
+                                :attributes '(("class" . "common-lisp")))))
     (define-key map (kbd "C-c c c")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp")))
