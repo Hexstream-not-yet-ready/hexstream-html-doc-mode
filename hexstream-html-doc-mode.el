@@ -230,8 +230,21 @@
     (lambda (region-min region-max)
       (interactive (hexstream-html-doc-suitable-region))
       (when downcasep (downcase-region region-min region-max))
+      (when (and (char-equal (char-syntax (char-before region-min))
+                             ?))
+                 (char-equal (char-syntax (char-after region-max))
+                             ?())
+                 (string= (save-excursion
+                            (skip-syntax-backward "^(")
+                            (current-word t))
+                          "code")
+        (let ((start (copy-marker region-min))
+              (end (copy-marker region-max t)))
+          (hexstream-html-doc-strip)
+          (setf region-min (marker-position start)
+                region-max (marker-position end))))
       (hexstream-html-doc-tag region-min region-max "code"
-                              :attributes `(("class" . ,class-attribute))))))
+                              :attributes `(("class" . ,class-attribute))))))))
 
 
 (defun hexstream-html-doc-suitable-region ()
