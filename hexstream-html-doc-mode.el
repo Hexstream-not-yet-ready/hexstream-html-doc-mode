@@ -252,10 +252,10 @@
       (list (region-beginning) (region-end))
     (if (not (find (char-syntax (char-after)) "w_"))
         (list nil nil)
-      (list (save-excursion
-              (skip-syntax-backward "w_")
-              (point))
-            (save-excursion
-              (skip-syntax-forward "w_")
-              (skip-chars-backward ".")
-              (point))))))
+      (destructuring-bind (start . end)
+          (bounds-of-thing-at-point 'symbol)
+        (list start
+              (save-excursion
+                (goto-char end)
+                (skip-chars-backward ".")
+                (point)))))))
