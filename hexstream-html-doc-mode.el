@@ -15,7 +15,7 @@
         (interactive (hexstream-html-doc-suitable-region))
         (hexstream-html-doc-tag region-min region-max "pre"
                                 :attributes '(("class" . "example")))
-        (hexstream-html-doc-tag nil nil "code"
+        (hexstream-html-doc-tag (point) (point) "code"
                                 :attributes '(("class" . "common-lisp")))))
     (define-key map (kbd "C-c c c")
       (hexstream-html-doc-make-code-wrapper
@@ -153,23 +153,20 @@
 
 (defun* hexstream-html-doc-wrap (region-min region-max insert-before insert-after
                                             &key (leave-point-at hexstream-html-doc-leave-point-at))
-  (cond (region-min
-         (when (eq region-min t)
-           (setf region-min (marker-position hexstream-html-doc-outer-start-marker)))
-         (when (eq region-max t)
-           (setf region-max (marker-position hexstream-html-doc-outer-end-marker)))
-         (goto-char region-min)
-         (setf (marker-position hexstream-html-doc-inner-end-marker)
-               region-max)
-         (insert insert-before)
-         (setf (marker-position hexstream-html-doc-outer-start-marker) region-min
-               (marker-position hexstream-html-doc-inner-start-marker) (point))
-         (goto-char hexstream-html-doc-inner-end-marker)
-         (insert insert-after)
-         (setf (marker-position hexstream-html-doc-inner-end-marker) (- (point) (length insert-after))
-               (marker-position hexstream-html-doc-outer-end-marker) (point)))
-        ;; Todo: smarter handling
-        (t (hexstream-html-doc-wrap (point) (point) insert-before insert-after)))
+  (when (eq region-min t)
+    (setf region-min (marker-position hexstream-html-doc-outer-start-marker)))
+  (when (eq region-max t)
+    (setf region-max (marker-position hexstream-html-doc-outer-end-marker)))
+  (goto-char region-min)
+  (setf (marker-position hexstream-html-doc-inner-end-marker)
+        region-max)
+  (insert insert-before)
+  (setf (marker-position hexstream-html-doc-outer-start-marker) region-min
+        (marker-position hexstream-html-doc-inner-start-marker) (point))
+  (goto-char hexstream-html-doc-inner-end-marker)
+  (insert insert-after)
+  (setf (marker-position hexstream-html-doc-inner-end-marker) (- (point) (length insert-after))
+        (marker-position hexstream-html-doc-outer-end-marker) (point))
   (setf (point) (ecase leave-point-at
                   (:outer-start hexstream-html-doc-outer-start-marker)
                   (:inner-start hexstream-html-doc-inner-start-marker)
@@ -221,9 +218,9 @@
   (let ((hexstream-html-doc-tag-style :block)
         (start (point))
         (end (copy-marker (point) t)))
-    (hexstream-html-doc-tag nil nil "table")
-    (hexstream-html-doc-tag nil nil "thead" :leave-point-at :outer-end)
-    (hexstream-html-doc-tag nil nil "tbody")
+    (hexstream-html-doc-tag (point) (point) "table")
+    (hexstream-html-doc-tag (point) (point) "thead" :leave-point-at :outer-end)
+    (hexstream-html-doc-tag (point) (point) "tbody")
     (indent-region start end)))
 
 (defun* hexstream-html-doc-make-code-wrapper (css-class-list &key (downcasep t))
@@ -236,32 +233,33 @@
     (lambda (region-min region-max)
       (interactive (hexstream-html-doc-suitable-region))
       (when downcasep (downcase-region region-min region-max))
-      (when (and (char-equal (char-syntax (char-before region-min))
-                             ?))
-                 (char-equal (char-syntax (char-after region-max))
-                             ?())
+      ;; ?( and ?) really screw up emacs' parsing...
+      (when (and (string= (char-to-string (char-syntax (char-before region-min)))
+                          ")")
+                 (string= (char-to-string (char-syntax (char-after region-max)))
+                          "(")
                  (string= (save-excursion
                             (skip-syntax-backward "^(")
                             (current-word t))
-                          "code")
-        (let ((start (copy-marker region-min))
-              (end (copy-marker region-max t)))
+                          "code"))
+        (let ((start (and region-min (copy-marker region-min)))
+              (end (and region-max (copy-marker region-max t))))
           (hexstream-html-doc-strip)
-          (setf region-min (marker-position start)
-                region-max (marker-position end))))
+          (setf region-min (and (markerp start) (marker-position start))
+                region-max (and (markerp end) (marker-position end)))))
       (hexstream-html-doc-tag region-min region-max "code"
-                              :attributes `(("class" . ,class-attribute))))))))
+                              :attributes `(("class" . ,class-attribute)))))))
 
 
 (defun hexstream-html-doc-suitable-region ()
   (if (use-region-p)
       (list (region-beginning) (region-end))
-    (if (not (find (char-syntax (char-after)) "w_"))
-        (list nil nil)
-      (destructuring-bind (start . end)
-          (bounds-of-thing-at-point 'symbol)
-        (list start
-              (save-excursion
-                (goto-char end)
-                (skip-chars-backward ".")
-                (point)))))))
+    (let ((bounds (bounds-of-thing-at-point 'symbol)))
+      (if bounds
+          (destructuring-bind (start . end) bounds
+            (list start
+                  (save-excursion
+                    (goto-char end)
+                    (skip-chars-backward ".")
+                    (point))))
+        (list (point) (point))))))
