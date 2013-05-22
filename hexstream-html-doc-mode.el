@@ -248,7 +248,7 @@
           (setf region-min (and (markerp start) (marker-position start))
                 region-max (and (markerp end) (marker-position end)))))
       (hexstream-html-doc-tag region-min region-max "code"
-                              :attributes `(("class" . ,class-attribute)))))))
+                              :attributes `(("class" . ,class-attribute))))))
 
 
 (defun hexstream-html-doc-suitable-region ()
