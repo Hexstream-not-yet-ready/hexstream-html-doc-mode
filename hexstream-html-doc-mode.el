@@ -5,6 +5,7 @@
     (define-key map (kbd "C-c m") (hexstream-html-doc-make-repeat-like
                                    'hexstream-html-doc-cycle-marker))
     (define-key map (kbd "C-c u") 'hexstream-html-doc-unfill)
+    (define-key map (kbd "C-M-q") 'hexstream-html-doc-indent-sexp)
     (define-key map (kbd "C-c s") 'hexstream-html-doc-strip)
     (define-key map (kbd "C-c t") 'hexstream-html-doc-tag)
     (define-key map (kbd "C-c v") (hexstream-html-doc-make-repeat-like
@@ -135,6 +136,40 @@
   (let ((fill-column 65535))
     (fill-paragraph)))
 
+(defun hexstream-html-doc-get-slime-buffer ()
+  (let ((buffer (get-buffer-create " hexstream-html-doc-slime")))
+    (prog1 buffer
+      (with-current-buffer buffer
+        (unless (eq major-mode 'lisp-mode)
+          (lisp-mode)
+          (slime-mode))))))
+
+;; Requires Slime.
+(defun hexstream-html-doc-indent-sexp ()
+  (interactive)
+  (let ((end (save-excursion (forward-sexp) (point))))
+    (let ((indented (let ((sexp (buffer-substring-no-properties (point) end)))
+                      (with-current-buffer (hexstream-html-doc-get-slime-buffer)
+                        (erase-buffer)
+                        (insert sexp)
+
+                        ;; Naïve fixup, part 1.
+                        (goto-char 1)
+                        (while (re-search-forward "&amp;" nil t)
+                          (replace-match "&" t t))
+
+                        (goto-char 1)
+                        (indent-sexp)
+
+                        ;; Naïve fixup, part 2.
+                        (goto-char 1)
+                        (while (re-search-forward "&" nil t)
+                          (replace-match "&amp;" t t))
+
+                        (buffer-string)))))
+      (delete-region (point) end)
+      (insert indented))))
+
 (defun hexstream-html-doc-strip ()
   (interactive)
   (save-excursion
@@ -238,10 +273,9 @@
                           ")")
                  (string= (char-to-string (char-syntax (char-after region-max)))
                           "(")
-                 (string= (save-excursion
-                            (skip-syntax-backward "^(")
-                            (current-word t))
-                          "code"))
+                 (save-excursion
+                   (skip-syntax-backward "^(")
+                   (looking-at-p "code\\_>")))
         (let ((start (and region-min (copy-marker region-min)))
               (end (and region-max (copy-marker region-max t))))
           (hexstream-html-doc-strip)
