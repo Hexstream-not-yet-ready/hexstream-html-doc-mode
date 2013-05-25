@@ -4,6 +4,7 @@
   (let ((map hexstream-html-doc-mode-map))
     (define-key map (kbd "C-c m") (hexstream-html-doc-make-repeat-like
                                    'hexstream-html-doc-cycle-marker))
+    (define-key map (kbd "C-c DEL") 'hexstream-html-doc-backward-delete-spaces)
     (define-key map (kbd "C-c u") 'hexstream-html-doc-unfill)
     (define-key map (kbd "C-M-q") 'hexstream-html-doc-indent-sexp)
     (define-key map (kbd "C-c s") 'hexstream-html-doc-strip)
@@ -130,6 +131,15 @@
                 (call-interactively inner-function)
               (push event unread-command-events)
               (setq dont-stop nil))))))))
+
+;; Somewhat useful to delete the indentation before an expression in <pre>,
+;; before doing C-M-q. But much smarter behavior would be possible.
+(defun hexstream-html-doc-backward-delete-spaces ()
+  (interactive)
+  (delete-region (point)
+                 (save-excursion
+                   (skip-chars-backward " \t")
+                   (point))))
 
 (defun hexstream-html-doc-unfill ()
   (interactive)
