@@ -252,11 +252,12 @@
   (interactive (hexstream-html-doc-suitable-region))
   (downcase-region region-min region-max)
   (hexstream-html-doc-tag region-min region-max "var"
-                          :leave-point-at (if region-min
-                                              :outer-end
-                                            :inner-start))
-  (when region-min
-    (skip-syntax-forward " ")))
+                          :leave-point-at (if (= region-min region-max)
+                                              :inner-start
+                                            :outer-end))
+  (unless (= region-min region-max)
+    (skip-syntax-forward " "))
+  nil)
 
 (defun hexstream-html-doc-insert-table ()
   (interactive)
