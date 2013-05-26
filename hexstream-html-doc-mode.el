@@ -31,6 +31,9 @@
     (define-key map (kbd "C-c c l p")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "library" "package")))
+    (define-key map (kbd "C-c c l v")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "library" "variable")))
     (define-key map (kbd "C-c c l f")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "library" "function" "operator")))
@@ -64,6 +67,9 @@
     (define-key map (kbd "C-c c s p")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "standard" "package")))
+    (define-key map (kbd "C-c c s v")
+      (hexstream-html-doc-make-code-wrapper
+       '("common-lisp" "standard" "variable")))
     (define-key map (kbd "C-c c s f")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "standard" "function" "operator")))
