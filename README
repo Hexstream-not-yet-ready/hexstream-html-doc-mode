@@ -1,8 +1,6 @@
 Project's (eventual) home: http://www.hexstreamsoft.com/libraries/hexstream-html-doc-mode/
 
-[STUB]
-
-hexstream-html-doc-mode is a trivial Emacs major mode (my first),
+hexstream-html-doc-mode is a simple Emacs major mode (my first),
 specializing html-mode to help me write documentation related to Common Lisp.
 
 
