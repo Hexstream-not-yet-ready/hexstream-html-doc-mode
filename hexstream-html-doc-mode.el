@@ -1,7 +1,9 @@
 (require 'cl)
 
 (define-derived-mode hexstream-html-doc-mode html-mode "Hexstream HTML Documentation"
+  (add-to-invisibility-spec :tags)
   (let ((map hexstream-html-doc-mode-map))
+    (define-key map (kbd "C-c T") 'hexstream-html-doc-cycle-tags-invisibility)
     (define-key map (kbd "C-c m") (hexstream-html-doc-make-repeat-like
                                    'hexstream-html-doc-cycle-marker))
     (define-key map (kbd "C-c DEL") 'hexstream-html-doc-backward-delete-spaces)
@@ -94,6 +96,25 @@
     (define-key map (kbd "C-c c s g")
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "standard" "glossary")))))
+
+(defun hexstream-html-doc-cycle-tags-invisibility ()
+  (interactive)
+  (cond ((invisible-p :tags)
+         (remove-from-invisibility-spec :tags)
+         (message "Showing tags."))
+        (t
+         (add-to-invisibility-spec :tags)
+         (message "Hiding tags.")))
+  (redisplay t))
+
+;;; overlay categories
+(setf (symbol-plist 'hexstream-html-doc-opening-tag)
+      '(invisible :tags intangible :opening-tag face italic evaporate t))
+(setf (symbol-plist 'hexstream-html-doc-code-tag-contents)
+      '(after-string "[C]" face bold evaporate t))
+(setf (symbol-plist 'hexstream-html-doc-closing-tag)
+      '(invisible :tags intangible :opening-tag face italic evaporate t))
+
 
 (defvar hexstream-html-doc-outer-start-marker (let ((m (make-marker)))
                                                 (prog1 m
@@ -188,15 +209,16 @@
 
 (defun hexstream-html-doc-strip ()
   (interactive)
-  (save-excursion
-    (skip-syntax-backward "^)")
-    (let ((end (point)))
-      (skip-syntax-backward "^(")
-      (delete-region (1- (point)) end))
-    (skip-syntax-forward "^(")
-    (let ((start (point)))
-      (skip-syntax-forward "^)")
-      (delete-region start (1+ (point)))))
+  (let ((inhibit-read-only t))
+    (save-excursion
+      (skip-syntax-backward "^)")
+      (let ((end (point)))
+        (skip-syntax-backward "^(")
+        (delete-region (1- (point)) end))
+      (skip-syntax-forward "^(")
+      (let ((start (point)))
+        (skip-syntax-forward "^)")
+        (delete-region start (1+ (point))))))
   nil)
 
 (defvar hexstream-html-doc-tag-style :inline)
@@ -275,6 +297,27 @@
     (hexstream-html-doc-tag (point) (point) "tbody")
     (indent-region start end)))
 
+(defun hexstream-html-doc-overlay-tag ()
+  (let ((opening-overlay (make-overlay hexstream-html-doc-outer-start-marker
+                                       hexstream-html-doc-inner-start-marker
+                                       nil t nil))
+        (content-overlay (make-overlay hexstream-html-doc-inner-start-marker
+                                       hexstream-html-doc-inner-end-marker
+                                       nil nil t))
+        (closing-overlay (make-overlay hexstream-html-doc-inner-end-marker
+                                       hexstream-html-doc-outer-end-marker
+                                       nil t nil)))
+    (let ((hint "Strip read-only tag with C-c s."))
+      (add-text-properties (overlay-start opening-overlay)
+                           (overlay-end opening-overlay)
+                           `(read-only ,hint rear-nonsticky (read-only)))
+      (add-text-properties (overlay-start closing-overlay)
+                           (overlay-end closing-overlay)
+                           `(read-only ,hint)))
+    (overlay-put opening-overlay 'category 'hexstream-html-doc-opening-tag)
+    (overlay-put content-overlay 'category 'hexstream-html-doc-code-tag-contents)
+    (overlay-put closing-overlay 'category 'hexstream-html-doc-closing-tag)))
+
 (defun* hexstream-html-doc-make-code-wrapper (css-class-list &key (downcasep t))
   (lexical-let ((class-attribute (with-output-to-string
                                    (princ (first css-class-list))
@@ -299,7 +342,8 @@
           (setf region-min (and (markerp start) (marker-position start))
                 region-max (and (markerp end) (marker-position end)))))
       (hexstream-html-doc-tag region-min region-max "code"
-                              :attributes `(("class" . ,class-attribute))))))
+                              :attributes `(("class" . ,class-attribute)))
+      (hexstream-html-doc-overlay-tag))))
 
 
 (defun hexstream-html-doc-suitable-region ()
