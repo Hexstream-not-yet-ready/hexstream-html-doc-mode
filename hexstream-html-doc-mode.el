@@ -97,14 +97,16 @@
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "standard" "glossary")))))
 
-(defun hexstream-html-doc-cycle-tags-invisibility ()
-  (interactive)
+(defun hexstream-html-doc-cycle-tags-invisibility (&optional messagep)
+  (interactive "p")
   (cond ((invisible-p :tags)
          (remove-from-invisibility-spec :tags)
-         (message "Showing tags."))
+         (when messagep
+           (message "Showing tags.")))
         (t
          (add-to-invisibility-spec :tags)
-         (message "Hiding tags.")))
+         (when messagep
+           (message "Hiding tags."))))
   (redraw-display))
 
 ;;; overlay categories
