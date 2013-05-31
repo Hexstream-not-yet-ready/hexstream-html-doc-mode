@@ -107,7 +107,7 @@
          (add-to-invisibility-spec :tags)
          (when messagep
            (message "Hiding tags."))))
-  (redraw-display))
+  (force-window-update))
 
 ;;; overlay categories
 (setf (symbol-plist 'hexstream-html-doc-opening-tag)
