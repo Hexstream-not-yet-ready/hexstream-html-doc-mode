@@ -105,7 +105,7 @@
         (t
          (add-to-invisibility-spec :tags)
          (message "Hiding tags.")))
-  (redisplay t))
+  (redraw-display))
 
 ;;; overlay categories
 (setf (symbol-plist 'hexstream-html-doc-opening-tag)
