@@ -315,7 +315,7 @@
                            `(read-only ,hint rear-nonsticky (read-only)))
       (add-text-properties (overlay-start closing-overlay)
                            (overlay-end closing-overlay)
-                           `(read-only ,hint)))
+                           `(read-only ,hint rear-nonsticky (read-only))))
     (overlay-put opening-overlay 'category 'hexstream-html-doc-opening-tag)
     (overlay-put content-overlay 'category 'hexstream-html-doc-code-tag-contents)
     (overlay-put closing-overlay 'category 'hexstream-html-doc-closing-tag)))
