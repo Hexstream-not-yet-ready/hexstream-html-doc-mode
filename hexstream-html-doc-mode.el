@@ -113,7 +113,7 @@
 (setf (symbol-plist 'hexstream-html-doc-opening-tag)
       '(invisible :tags intangible :opening-tag face italic evaporate t))
 (setf (symbol-plist 'hexstream-html-doc-code-tag-contents)
-      '(after-string "[C]" face bold evaporate t))
+      `(after-string ,(concat (propertize "[" 'cursor t) "C]") face bold evaporate t))
 (setf (symbol-plist 'hexstream-html-doc-closing-tag)
       '(invisible :tags intangible :closing-tag face italic evaporate t))
 
