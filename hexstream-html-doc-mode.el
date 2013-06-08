@@ -97,6 +97,7 @@
       (hexstream-html-doc-make-code-wrapper
        '("common-lisp" "standard" "glossary")))))
 
+
 (defun hexstream-html-doc-cycle-tags-invisibility (&optional messagep)
   (interactive "p")
   (cond ((invisible-p :tags)
@@ -345,7 +346,8 @@
                 region-max (and (markerp end) (marker-position end)))))
       (hexstream-html-doc-tag region-min region-max "code"
                               :attributes `(("class" . ,class-attribute)))
-      (hexstream-html-doc-overlay-tag))))
+      ;(hexstream-html-doc-overlay-tag)
+      )))
 
 
 (defun hexstream-html-doc-suitable-region ()
