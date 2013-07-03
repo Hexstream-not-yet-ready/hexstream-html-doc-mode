@@ -13,6 +13,7 @@
     (define-key map (kbd "C-c t") 'hexstream-html-doc-tag)
     (define-key map (kbd "C-c v") (hexstream-html-doc-make-repeat-like
                                    'hexstream-html-doc-variable))
+    (define-key map (kbd "C-c a") 'hexstream-html-doc-link)
     (define-key map (kbd "C-c i t") 'hexstream-html-doc-insert-table)
     (define-key map (kbd "C-c e")
       (lambda (region-min region-max)
@@ -288,6 +289,15 @@
                                             :outer-end))
   (unless (= region-min region-max)
     (skip-syntax-forward " "))
+  nil)
+
+(defun hexstream-html-doc-link (region-min region-max)
+  (interactive (hexstream-html-doc-suitable-region))
+  (hexstream-html-doc-tag region-min region-max "a"
+                          :leave-point-at :inner-start)
+  (backward-char)
+  (insert " href=\"\"")
+  (backward-char)
   nil)
 
 (defun hexstream-html-doc-insert-table ()
