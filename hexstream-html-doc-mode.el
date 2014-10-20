@@ -277,6 +277,7 @@
    :leave-point-at leave-point-at)
   (when (eq style :block)
     (newline 2)
+    (indent-for-tab-command)
     (previous-line)
     (indent-for-tab-command)))
 
